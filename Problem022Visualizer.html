@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Minimum Steps to Move 1's – Visualizer</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f7fa;
+        padding: 20px;
+      }
+      h1 {
+        margin-bottom: 5px;
+      }
+      input {
+        width: 400px;
+        padding: 8px;
+        font-size: 16px;
+      }
+      button {
+        padding: 8px 14px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-left: 8px;
+      }
+      #chart {
+        display: flex;
+        align-items: flex-end;
+        height: 80px;
+        margin-top: 30px;
+        border-left: 2px solid #333;
+        border-bottom: 2px solid #333;
+        padding: 10px;
+        gap: 6px;
+      }
+      .cell {
+        width: 30px;
+        height: 60px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        font-size: 24px;
+        background: #e0e7ef;
+        border-radius: 6px 6px 0 0;
+        position: relative;
+        transition: background 0.3s;
+      }
+      .cell.one {
+        background: steelblue;
+        color: #fff;
+      }
+      .cell.zero {
+        background: #f7b731;
+        color: #333;
+      }
+      .cell.current {
+        outline: 3px solid #ff5252;
+        z-index: 2;
+      }
+      .cell.swapped {
+        animation: swapAnim 0.5s;
+      }
+      @keyframes swapAnim {
+        0% { background: #ff5252; }
+        100% { }
+      }
+      #info {
+        margin-top: 20px;
+        font-size: 18px;
+      }
+      #controls {
+        margin-top: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Minimum Steps to Move 1's – Animation</h1>
+    <p>Enter binary string (e.g. 1100101):</p>
+    <input id="input" value="1100101" maxlength="32" />
+    <button onclick="start()">Start Animation</button>
+    <div id="controls" style="display:none">
+      <button onclick="step()">Step</button>
+      <button onclick="autoPlay()">Auto Play</button>
+      <button onclick="reset()">Reset</button>
+    </div>
+    <div id="chart"></div>
+    <div id="info"></div>
+    <script>
+      let s = [], idx = 0, ones = 0, swaps = 0, steps = [], autoInterval = null, finished = false;
+      function start() {
+        clearInterval(autoInterval);
+        document.getElementById('controls').style.display = 'inline-block';
+        s = document.getElementById('input').value.trim().split("");
+        if (!/^([01]+)$/.test(s.join(""))) {
+          alert("Please enter a valid binary string (only 0 and 1)");
+          return;
+        }
+        idx = 0;
+        ones = 0;
+        swaps = 0;
+        steps = [];
+        finished = false;
+        for (let i = 0; i < s.length; i++) {
+          steps.push({
+            idx: i,
+            char: s[i],
+            ones: 0,
+            swaps: 0,
+            action: ''
+          });
+        }
+        draw();
+        updateInfo();
+      }
+      function step() {
+        if (finished || idx >= s.length) return;
+        let action = '';
+        if (s[idx] === '1') {
+          ones++;
+          action = "Found '1', increment ones";
+        } else {
+          swaps += ones;
+          action = `Found '0', add ones (${ones}) to swaps`;
+        }
+        steps[idx].ones = ones;
+        steps[idx].swaps = swaps;
+        steps[idx].action = action;
+        idx++;
+        draw();
+        updateInfo();
+        if (idx === s.length) {
+          finished = true;
+          document.getElementById('info').innerHTML += '<br><strong>✅ Done! Total swaps: ' + swaps + '</strong>';
+        }
+      }
+      function autoPlay() {
+        clearInterval(autoInterval);
+        autoInterval = setInterval(() => {
+          if (!finished) step();
+          else clearInterval(autoInterval);
+        }, 800);
+      }
+      function reset() {
+        clearInterval(autoInterval);
+        idx = 0;
+        ones = 0;
+        swaps = 0;
+        finished = false;
+        steps.forEach(st => { st.ones = 0; st.swaps = 0; st.action = ''; });
+        draw();
+        updateInfo();
+      }
+      function draw() {
+        const chart = document.getElementById('chart');
+        chart.innerHTML = '';
+        for (let i = 0; i < s.length; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell ' + (s[i] === '1' ? 'one' : 'zero');
+          if (i === idx && !finished) cell.classList.add('current');
+          if (steps[i].action && i < idx) cell.classList.add('swapped');
+          cell.textContent = s[i];
+          chart.appendChild(cell);
+        }
+      }
+      function updateInfo() {
+        let info = '';
+        if (idx < s.length) {
+          info = `Step ${idx + 1} of ${s.length}: <br>`;
+          info += `Current char: <b>${s[idx]}</b><br>`;
+          info += `Ones so far: <b>${ones}</b><br>`;
+          info += `Swaps so far: <b>${swaps}</b><br>`;
+          if (steps[idx] && steps[idx].action) info += `Action: <b>${steps[idx].action}</b>`;
+        } else {
+          info = `All steps complete.<br>Total swaps needed: <b>${swaps}</b>`;
+        }
+        document.getElementById('info').innerHTML = info;
+      }
+      // Initialize on load
+      start();
+    </script>
+  </body>
+</html>
